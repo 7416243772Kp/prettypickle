@@ -1,0 +1,31 @@
+<div class="container addresses-page"><h1 class="page-title">My Addresses</h1>
+<button class="btn btn-primary mb-20" onclick="document.getElementById('addressModal').classList.add('active')">+ Add Address</button>
+<% if (typeof addresses !== 'undefined') { %><% (addresses || []).forEach(addr => { %>
+<div class="address-card" style="margin-bottom:12px;cursor:default;">
+<div class="address-card-label"><%= addr.label %> <%= addr.isDefault ? '⭐ Default' : '' %></div>
+<p><%= addr.fullName %>, <%= addr.phone %></p><p><%= addr.line1 %><%= addr.line2 ? ', ' + addr.line2 : '' %></p><p><%= addr.city %>, <%= addr.state %> - <%= addr.pincode %></p>
+<div style="margin-top:8px;"><button class="btn btn-small btn-danger" onclick="deleteAddress('<%= addr._id %>')">Delete</button></div>
+</div>
+<% }) %><% } %>
+<div class="modal-overlay" id="addressModal"><div class="modal">
+<div class="modal-header"><h3>Add Address</h3><span class="modal-close" onclick="document.getElementById('addressModal').classList.remove('active')">×</span></div>
+<form id="addressForm">
+<input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<div class="form-group"><label>Label</label><select name="label"><option>Home</option><option>Office</option><option>Other</option></select></div>
+<div class="form-group"><label>Full Name</label><input name="fullName" required></div>
+<div class="form-group"><label>Phone</label><input name="phone" pattern="[6-9]\d{9}" required placeholder="10-digit mobile"></div>
+<div class="form-group"><label>Address Line 1</label><input name="line1" required></div>
+<div class="form-group"><label>Address Line 2</label><input name="line2"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+<div class="form-group"><label>City</label><input name="city" required></div>
+<div class="form-group"><label>State</label><input name="state" required></div>
+</div>
+<div class="form-group"><label>Pincode</label><input name="pincode" pattern="\d{6}" required></div>
+<div class="form-group"><label><input type="checkbox" name="isDefault"> Set as default</label></div>
+<button type="submit" class="btn btn-primary btn-full">Save Address</button>
+</form></div></div></div>
+<script>
+document.getElementById('addressForm')?.addEventListener('submit', async(e) => { e.preventDefault(); const fd = new FormData(e.target); const data = Object.fromEntries(fd.entries()); data.isDefault = !!data.isDefault;
+try { await fetchAPI('/addresses/save', { method:'POST', body:JSON.stringify(data) }); showToast('Address saved!'); location.reload(); } catch(err) { showToast(err.message,'error'); }});
+async function deleteAddress(id) { if(!confirm('Delete this address?')) return; try { await fetchAPI('/addresses/'+id, { method:'DELETE' }); location.reload(); } catch(err) { showToast(err.message,'error'); }}
+</script>

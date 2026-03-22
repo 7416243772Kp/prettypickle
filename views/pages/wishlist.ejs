@@ -1,0 +1,6 @@
+<div class="container wishlist-page"><h1 class="page-title">My Wishlist</h1>
+<% if (typeof products !== 'undefined' && products.length > 0) { %>
+<div class="products-grid"><% products.forEach(product => { %><%- include('../partials/product-card', { product }) %><% }) %></div>
+<% } else { %>
+<div class="error-page" style="min-height:30vh;"><p>Your wishlist is empty</p><a href="/" class="btn btn-primary mt-20">Browse Products</a></div>
+<% } %></div>

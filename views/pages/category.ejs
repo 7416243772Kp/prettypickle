@@ -1,0 +1,5 @@
+<div class="container" style="padding:30px 20px;">
+<h1 class="page-title"><%= category.name %></h1>
+<% if (category.description) { %><p style="color:var(--gray-mid);margin-bottom:20px;"><%= category.description %></p><% } %>
+<% if (products.length > 0) { %><div class="products-grid"><% products.forEach(product => { %><%- include('../partials/product-card', { product }) %><% }) %></div>
+<% } else { %><div class="error-page" style="min-height:30vh;"><p>No products in this category yet</p></div><% } %></div>

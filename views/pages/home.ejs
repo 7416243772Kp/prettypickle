@@ -1,0 +1,124 @@
+<% if (scrollingBanner) { %>
+<div class="announcement-bar">
+    <div class="announcement-bar-scroll">
+        <span><%= scrollingBanner.scrollText %></span>
+        <span><%= scrollingBanner.scrollText %></span>
+    </div>
+</div>
+<% } %>
+
+<!-- Top Banner Carousel -->
+<% if (topBanners.length > 0) { %>
+<div class="banner-carousel" id="topBannerCarousel">
+    <div class="banner-carousel-track" id="bannerTrack">
+        <% topBanners.forEach(banner => { %>
+            <div class="banner-carousel-slide">
+                <a href="<%= banner.link || '#' %>">
+                    <img src="/images/uploads/<%= banner.image %>" alt="Banner" loading="lazy">
+                </a>
+            </div>
+        <% }) %>
+    </div>
+    <% if (topBanners.length > 1) { %>
+    <div class="banner-dots" id="bannerDots">
+        <% topBanners.forEach((_, i) => { %>
+            <span class="banner-dot <%= i === 0 ? 'active' : '' %>" data-index="<%= i %>"></span>
+        <% }) %>
+    </div>
+    <% } %>
+</div>
+<% } %>
+
+<div class="container">
+    <!-- Category Bar -->
+    <div class="category-bar">
+        <a href="/categories" class="category-chip active">All</a>
+        <% categories.forEach(cat => { %>
+            <a href="/category/<%= cat.slug %>" class="category-chip"><%= cat.name %></a>
+        <% }) %>
+    </div>
+
+    <!-- Best Sellers by Category -->
+    <% bestSellersByCategory.forEach(section => { %>
+        <div class="section-title">
+            <h2>Best Selling <%= section.category.name %></h2>
+            <p>Top picks in <%= section.category.name.toLowerCase() %></p>
+        </div>
+        <div class="products-grid">
+            <% section.products.forEach(product => { %>
+                <%- include('../partials/product-card', { product }) %>
+            <% }) %>
+        </div>
+    <% }) %>
+
+    <!-- All Products Menu -->
+    <% if (menuProducts.length > 0) { %>
+        <div class="section-title">
+            <h2>Our Menu</h2>
+            <p>Explore all our products</p>
+        </div>
+        <div class="products-grid">
+            <% menuProducts.forEach(product => { %>
+                <%- include('../partials/product-card', { product }) %>
+            <% }) %>
+        </div>
+    <% } %>
+
+    <!-- Recently Viewed (populated by JS from localStorage) -->
+    <div class="recently-viewed" id="recentlyViewed" style="display:none;">
+        <h2>Recently Viewed</h2>
+        <div class="recently-viewed-scroll" id="recentlyViewedItems"></div>
+    </div>
+</div>
+
+<!-- Bottom Banners -->
+<% if (bottomBanners.length > 0) { %>
+<div class="banner-carousel" style="margin-top:30px;">
+    <div class="banner-carousel-track">
+        <% bottomBanners.forEach(banner => { %>
+            <div class="banner-carousel-slide">
+                <a href="<%= banner.link || '#' %>"><img src="/images/uploads/<%= banner.image %>" alt="Banner" loading="lazy"></a>
+            </div>
+        <% }) %>
+    </div>
+</div>
+<% } %>
+
+<script>
+// Banner carousel auto-slide
+(function() {
+    const track = document.getElementById('bannerTrack');
+    const dots = document.querySelectorAll('.banner-dot');
+    if (!track || dots.length === 0) return;
+    let current = 0;
+    const total = dots.length;
+
+    function goTo(index) {
+        current = index;
+        track.style.transform = `translateX(-${current * 100}%)`;
+        dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    }
+
+    dots.forEach(dot => dot.addEventListener('click', () => goTo(parseInt(dot.dataset.index))));
+    setInterval(() => goTo((current + 1) % total), 5000);
+})();
+
+// Wishlist toggle
+async function toggleWishlist(productId, el) {
+    try {
+        const res = await fetchAPI('/products/wishlist/toggle', {
+            method: 'POST',
+            body: JSON.stringify({ productId })
+        });
+        el.classList.toggle('active');
+        el.innerHTML = el.classList.contains('active') ? '♥' : '♡';
+        showToast(res.added ? 'Added to wishlist' : 'Removed from wishlist');
+    } catch (err) {
+        if (err.message.includes('401') || err.message.includes('Unauthorized')) {
+            window.location.href = '/auth/google';
+        } else {
+            showToast('Please sign in first', 'error');
+        }
+    }
+}
+</script>

@@ -1,0 +1,388 @@
+<%
+    var productImage = (product.images && product.images.length > 0) ? '/images/uploads/' + product.images[0] : '/images/placeholder-product.png';
+    var avgRating = product.avgRating || 0;
+    var roundedRating = Math.round(avgRating);
+    var totalRatings = product.totalRatings || 0;
+    var hasVariants = product.hasVariants && product.variants && product.variants.length > 0;
+    var firstVariantName = hasVariants ? product.variants[0].name : '';
+%>
+
+<div class="container">
+    <div class="product-detail">
+        <!-- Product Gallery -->
+        <div class="product-gallery">
+            <div class="product-gallery-main">
+                <img id="mainImage" src="<%= productImage %>" alt="<%= product.title %>">
+            </div>
+            <% if (product.images && product.images.length > 1) { %>
+            <div class="product-gallery-thumbs">
+                <% product.images.forEach(function(img, i) { %>
+                    <div class="product-gallery-thumb <%= i === 0 ? 'active' : '' %>" data-src="/images/uploads/<%= img %>">
+                        <img src="/images/uploads/<%= img %>" alt="<%= product.title %> - <%= i + 1 %>">
+                    </div>
+                <% }) %>
+            </div>
+            <% } %>
+        </div>
+
+        <!-- Product Info -->
+        <div class="product-info">
+            <h1><%= product.title %></h1>
+
+            <div class="veg-nonveg-label">
+                <% if (product.type === 'veg') { %>
+                    <div class="veg-mark" style="position:static;"></div>
+                    <span style="color:var(--veg-green);">Vegetarian</span>
+                <% } else { %>
+                    <div class="nonveg-mark" style="position:static;"></div>
+                    <span style="color:var(--nonveg-red);">Non-Vegetarian</span>
+                <% } %>
+            </div>
+
+            <!-- Rating Summary -->
+            <div class="product-rating-summary">
+                <span class="product-rating-number"><%= avgRating.toFixed(1) %></span>
+                <span class="rating-stars" style="font-size:1.2rem;">
+                    <% for (var i = 1; i <= 5; i++) { %>
+                        <% if (i <= roundedRating) { %>★<% } else { %>☆<% } %>
+                    <% } %>
+                </span>
+                <span class="rating-count">(<%= totalRatings %> reviews)</span>
+            </div>
+
+            <!-- Variant Selector (Bone/Boneless) -->
+            <% if (hasVariants) { %>
+            <div class="variant-selector">
+                <label>Select Type</label>
+                <div class="variant-options" id="variantOptions">
+                    <% product.variants.forEach(function(v, i) { %>
+                        <div class="variant-option <%= i === 0 ? 'selected' : '' %>" data-variant="<%= v.name %>" data-prices="<%= JSON.stringify(v.prices) %>">
+                            <%= v.name %>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+            <% } %>
+
+            <!-- Weight Selector -->
+            <div class="weight-selector">
+                <label>Select Weight</label>
+                <div class="weight-options" id="weightOptions">
+                    <%
+                        var prices = hasVariants ? product.variants[0].prices : product.basePrices;
+                        var pricesObj = prices.toJSON ? prices.toJSON() : prices;
+                        var weights = ['250g', '500g', '750g', '1kg', '2kg'];
+                        var firstSelected = false;
+                    %>
+                    <% weights.forEach(function(w) { %>
+                        <% if (pricesObj[w] && pricesObj[w] > 0) { %>
+                            <div class="weight-option <%= !firstSelected ? 'selected' : '' %>" data-weight="<%= w %>" data-price="<%= pricesObj[w] %>">
+                                <%= w %>
+                                <span class="weight-price">₹<%= pricesObj[w] %></span>
+                            </div>
+                            <% firstSelected = true; %>
+                        <% } %>
+                    <% }) %>
+                </div>
+            </div>
+
+            <!-- Quantity -->
+            <div class="quantity-selector">
+                <label>Quantity</label>
+                <div class="quantity-controls">
+                    <button id="qtyMinus">−</button>
+                    <input type="number" id="qtyInput" value="1" min="1" max="100" readonly>
+                    <button id="qtyPlus">+</button>
+                </div>
+                <span style="font-size:0.8rem;color:var(--gray-mid);">Max 100</span>
+            </div>
+
+            <!-- Price Display -->
+            <div class="product-price-display">
+                <div class="total-price" id="totalPrice">₹0</div>
+                <div class="price-breakdown" id="priceBreakdown"></div>
+                <div class="includes-gst">Inclusive of all taxes (GST)</div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="product-actions">
+                <button class="btn btn-primary btn-large" id="buyNowBtn">Buy Now</button>
+                <button class="btn btn-secondary btn-large" id="addCartBtn">Add to Cart</button>
+            </div>
+
+            <% if (product.description) { %>
+            <div style="margin-top:20px;">
+                <h3 style="margin-bottom:8px;">Description</h3>
+                <p style="color:var(--gray-dark);line-height:1.7;"><%= product.description %></p>
+            </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Frequently Bought Together -->
+    <% if (frequentlyBought.length > 0) { %>
+    <div class="frequently-bought">
+        <h3>Frequently Bought Together</h3>
+        <div class="frequently-bought-items">
+            <% frequentlyBought.forEach(function(fp, i) { %>
+                <%
+                    var fpImage = (fp.images && fp.images.length > 0) ? '/images/uploads/' + fp.images[0] : '/images/placeholder-product.png';
+                %>
+                <div class="frequently-bought-item">
+                    <a href="/product/<%= fp.slug %>">
+                        <img src="<%= fpImage %>" alt="<%= fp.title %>">
+                        <div style="font-size:0.8rem;margin-top:4px;"><%= fp.title.substring(0, 25) %></div>
+                    </a>
+                </div>
+                <% if (i < frequentlyBought.length - 1) { %>
+                    <span class="frequently-bought-plus">+</span>
+                <% } %>
+            <% }) %>
+        </div>
+    </div>
+    <% } %>
+
+    <!-- Reviews Section -->
+    <div class="reviews-section">
+        <h2 style="font-size:1.5rem;font-weight:800;">Customer Reviews</h2>
+
+        <!-- Rating Summary with Bars -->
+        <% if (ratingDistribution && ratingDistribution.total > 0) { %>
+        <div class="reviews-summary">
+            <div class="reviews-avg">
+                <div class="avg-number"><%= avgRating.toFixed(1) %></div>
+                <div class="avg-stars">
+                    <% for (var s = 1; s <= 5; s++) { %>
+                        <% if (s <= roundedRating) { %>★<% } else { %>☆<% } %>
+                    <% } %>
+                </div>
+                <div class="avg-total"><%= ratingDistribution.total %> reviews</div>
+            </div>
+            <div class="reviews-bars">
+                <% for (var star = 5; star >= 1; star--) { %>
+                    <%
+                        var pct = ratingDistribution[star].percentage;
+                        var barLink = '/product/' + product.slug + '?rating=' + star;
+                    %>
+                    <a href="<%= barLink %>" class="rating-bar-row" style="text-decoration:none;color:inherit;display:flex;align-items:center;cursor:pointer;">
+                        <span class="rating-bar-label"><%= star %> ★</span>
+                        <div class="rating-bar-track">
+                            <div class="rating-bar-fill" style="width: <%= pct %>%;"></div>
+                        </div>
+                        <span class="rating-bar-percent"><%= pct %>%</span>
+                    </a>
+                <% } %>
+            </div>
+        </div>
+        <% } %>
+
+        <% if (filterRating > 0) { %>
+            <p style="margin:16px 0;">Showing <strong><%= filterRating %>-star</strong> reviews. <a href="/product/<%= product.slug %>" style="text-decoration:underline;">Show all</a></p>
+        <% } %>
+
+        <!-- Reviews List -->
+        <div id="reviewsList">
+            <% reviews.forEach(function(review) { %>
+                <%
+                    var reviewerName = (review.user && review.user.name) ? review.user.name : 'Anonymous';
+                    var reviewerInitial = reviewerName.charAt(0);
+                    var reviewDate = new Date(review.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+                %>
+                <div class="review-card">
+                    <div class="review-card-header">
+                        <div class="review-card-avatar"><%= reviewerInitial %></div>
+                        <div>
+                            <div class="review-card-name"><%= reviewerName %></div>
+                            <div class="review-card-date"><%= reviewDate %></div>
+                        </div>
+                    </div>
+                    <div class="review-card-stars">
+                        <% for (var ri = 1; ri <= 5; ri++) { %>
+                            <% if (ri <= review.rating) { %>★<% } else { %>☆<% } %>
+                        <% } %>
+                    </div>
+                    <div class="review-card-text"><%= review.text %></div>
+                </div>
+            <% }) %>
+        </div>
+
+        <!-- Pagination -->
+        <% if (totalPages > 1) { %>
+        <div style="text-align:center;margin:20px 0;">
+            <% for (var p = 1; p <= totalPages; p++) { %>
+                <%
+                    var pageUrl = '/product/' + product.slug + '?page=' + p;
+                    if (filterRating) { pageUrl += '&rating=' + filterRating; }
+                    var pageClass = (p === currentPage) ? 'btn btn-small btn-primary' : 'btn btn-small btn-secondary';
+                %>
+                <a href="<%= pageUrl %>" class="<%= pageClass %>" style="margin:0 4px;">
+                    <%= p %>
+                </a>
+            <% } %>
+        </div>
+        <% } %>
+
+        <!-- Write Review Form -->
+        <% if (isAuthenticated && !userReview) { %>
+        <div class="review-form">
+            <h3>Write a Review</h3>
+            <form id="reviewForm">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="star-input" id="starInput">
+                    <span data-rating="1">☆</span>
+                    <span data-rating="2">☆</span>
+                    <span data-rating="3">☆</span>
+                    <span data-rating="4">☆</span>
+                    <span data-rating="5">☆</span>
+                </div>
+                <textarea name="text" placeholder="Share your experience..." required minlength="10" maxlength="1000"></textarea>
+                <button type="submit" class="btn btn-primary">Submit Review</button>
+            </form>
+        </div>
+        <% } else if (!isAuthenticated) { %>
+        <p style="margin-top:16px;">
+            <a href="/auth/google" class="btn btn-secondary">Sign in to write a review</a>
+        </p>
+        <% } %>
+    </div>
+</div>
+
+<script>
+var productId = '<%= product._id %>';
+var productSlug = '<%= product.slug %>';
+var selectedVariant = '<%= firstVariantName %>';
+var selectedWeight = '';
+var selectedPrice = 0;
+var selectedRating = 0;
+
+// Initialize from DOM
+(function() {
+    var sel = document.querySelector('.weight-option.selected');
+    if (sel) {
+        selectedWeight = sel.getAttribute('data-weight');
+        selectedPrice = parseFloat(sel.getAttribute('data-price'));
+    }
+    updatePrice();
+})();
+
+// Thumbnail click
+document.querySelectorAll('.product-gallery-thumb').forEach(function(thumb) {
+    thumb.addEventListener('click', function() {
+        var src = this.getAttribute('data-src');
+        document.getElementById('mainImage').src = src;
+        document.querySelectorAll('.product-gallery-thumb').forEach(function(t) { t.classList.remove('active'); });
+        this.classList.add('active');
+    });
+});
+
+// Variant selector
+document.querySelectorAll('.variant-option').forEach(function(opt) {
+    opt.addEventListener('click', function() {
+        document.querySelectorAll('.variant-option').forEach(function(o) { o.classList.remove('selected'); });
+        this.classList.add('selected');
+        selectedVariant = this.getAttribute('data-variant');
+        var prices = JSON.parse(this.getAttribute('data-prices'));
+        var weightOpts = document.getElementById('weightOptions');
+        weightOpts.innerHTML = '';
+        var weights = ['250g', '500g', '750g', '1kg', '2kg'];
+        var first = true;
+        weights.forEach(function(w) {
+            if (prices[w] && prices[w] > 0) {
+                var div = document.createElement('div');
+                div.className = 'weight-option' + (first ? ' selected' : '');
+                div.setAttribute('data-weight', w);
+                div.setAttribute('data-price', prices[w]);
+                div.addEventListener('click', function() { selectWeight(this); });
+                div.innerHTML = w + '<span class="weight-price">₹' + prices[w] + '</span>';
+                weightOpts.appendChild(div);
+                if (first) { selectedWeight = w; selectedPrice = prices[w]; first = false; }
+            }
+        });
+        updatePrice();
+    });
+});
+
+// Weight selector
+document.querySelectorAll('.weight-option').forEach(function(opt) {
+    opt.addEventListener('click', function() { selectWeight(this); });
+});
+
+function selectWeight(el) {
+    document.querySelectorAll('.weight-option').forEach(function(o) { o.classList.remove('selected'); });
+    el.classList.add('selected');
+    selectedWeight = el.getAttribute('data-weight');
+    selectedPrice = parseFloat(el.getAttribute('data-price'));
+    updatePrice();
+}
+
+// Quantity
+document.getElementById('qtyMinus').addEventListener('click', function() { changeQty(-1); });
+document.getElementById('qtyPlus').addEventListener('click', function() { changeQty(1); });
+
+function changeQty(delta) {
+    var input = document.getElementById('qtyInput');
+    var val = parseInt(input.value) + delta;
+    val = Math.max(1, Math.min(100, val));
+    input.value = val;
+    updatePrice();
+}
+
+function updatePrice() {
+    var qty = parseInt(document.getElementById('qtyInput').value);
+    var total = selectedPrice * qty;
+    document.getElementById('totalPrice').textContent = '₹' + total.toLocaleString('en-IN');
+    var breakdown = '₹' + selectedPrice + ' × ' + qty;
+    if (selectedVariant) { breakdown += ' (' + selectedVariant + ', ' + selectedWeight + ')'; }
+    else if (selectedWeight) { breakdown += ' (' + selectedWeight + ')'; }
+    document.getElementById('priceBreakdown').textContent = breakdown;
+}
+
+// Add to Cart
+document.getElementById('addCartBtn').addEventListener('click', addToCart);
+document.getElementById('buyNowBtn').addEventListener('click', function() {
+    addToCart().then(function() { window.location.href = '/orders/checkout/page'; });
+});
+
+async function addToCart() {
+    try {
+        var qty = parseInt(document.getElementById('qtyInput').value);
+        await fetchAPI('/cart/add', {
+            method: 'POST',
+            body: JSON.stringify({ productId: productId, variant: selectedVariant, weight: selectedWeight, quantity: qty })
+        });
+        showToast('Added to cart!');
+    } catch (err) {
+        if (err.message.indexOf('Unauthorized') !== -1) { window.location.href = '/auth/google'; }
+        else { showToast(err.message, 'error'); }
+    }
+}
+
+// Star rating input
+document.querySelectorAll('.star-input span').forEach(function(span) {
+    span.addEventListener('click', function() {
+        var r = parseInt(this.getAttribute('data-rating'));
+        selectedRating = r;
+        document.querySelectorAll('.star-input span').forEach(function(s, idx) {
+            s.textContent = idx < r ? '★' : '☆';
+        });
+    });
+});
+
+// Review form
+var reviewForm = document.getElementById('reviewForm');
+if (reviewForm) {
+    reviewForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (selectedRating === 0) { showToast('Please select a rating', 'error'); return; }
+        var text = this.text.value;
+        try {
+            await fetchAPI('/reviews/' + productId, {
+                method: 'POST',
+                body: JSON.stringify({ rating: selectedRating, text: text })
+            });
+            showToast('Review submitted!');
+            setTimeout(function() { location.reload(); }, 1000);
+        } catch (err) { showToast(err.message, 'error'); }
+    });
+}
+</script>

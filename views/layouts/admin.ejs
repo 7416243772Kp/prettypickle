@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title><%= typeof title !== 'undefined' ? title + ' | Admin' : 'Admin Panel' %> — Pretty Pickles</title>
+    <link rel="stylesheet" href="/css/theme.css">
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <% if (typeof chartjs !== 'undefined' && chartjs) { %>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <% } %>
+</head>
+<body>
+    <div class="admin-layout">
+
+        <%- include('../partials/admin-sidebar') %>
+
+        <div class="admin-content">
+            <%- body %>
+        </div>
+
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Global Admin JS -->
+    <script>
+        const csrfToken = '<%= typeof csrfToken !== "undefined" ? csrfToken : "" %>';
+
+        function showToast(message, type = 'success', duration = 3000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        async function fetchAPI(url, options = {}) {
+            const defaults = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'CSRF-Token': csrfToken
+                },
+                credentials: 'same-origin'
+            };
+            const config = { ...defaults, ...options };
+            if (options.headers) {
+                config.headers = { ...defaults.headers, ...options.headers };
+            }
+            const response = await fetch(url, config);
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Something went wrong');
+            }
+            return data;
+        }
+
+        // Admin sidebar mobile toggle
+        const adminMenuToggle = document.getElementById('adminMenuToggle');
+        const adminSidebar = document.querySelector('.admin-sidebar');
+        if (adminMenuToggle) {
+            adminMenuToggle.addEventListener('click', () => {
+                adminSidebar.classList.toggle('open');
+            });
+        }
+    </script>
+
+    <% if (typeof pageScript !== 'undefined') { %>
+        <script src="/js/admin/<%= pageScript %>"></script>
+    <% } %>
+</body>
+</html>

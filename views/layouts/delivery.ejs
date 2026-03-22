@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Pretty Pickles Delivery</title>
+    <link rel="stylesheet" href="/css/theme.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+    <div class="delivery-app">
+
+        <div class="delivery-header">
+            <h1>Pretty Pickles Delivery</h1>
+        </div>
+
+        <%- body %>
+
+    </div>
+
+    <script>
+        const csrfToken = '<%= typeof csrfToken !== "undefined" ? csrfToken : "" %>';
+
+        async function fetchAPI(url, options = {}) {
+            const defaults = {
+                headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrfToken },
+                credentials: 'same-origin'
+            };
+            const config = { ...defaults, ...options };
+            if (options.headers) config.headers = { ...defaults.headers, ...options.headers };
+            const response = await fetch(url, config);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Something went wrong');
+            return data;
+        }
+    </script>
+
+    <% if (typeof pageScript !== 'undefined') { %>
+        <script src="/js/delivery/<%= pageScript %>"></script>
+    <% } %>
+
+    <!-- Register Service Worker for PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/js/delivery/sw.js')
+                .then(reg => console.log('SW registered'))
+                .catch(err => console.error('SW failed:', err));
+        }
+    </script>
+</body>
+</html>
