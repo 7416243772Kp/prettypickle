@@ -5,10 +5,14 @@ const Address = require('../models/Address');
 // Middleware
 router.use(ensureAuth);
 
-// List addresses (page)
+// List addresses (API)
 router.get('/', async (req, res) => {
-    const addresses = await Address.find({ user: req.user._id });
-    res.render('pages/addresses', { title: 'My Addresses', addresses });
+    try {
+        const addresses = await Address.find({ user: req.user._id });
+        res.json({ success: true, data: { addresses } });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch addresses' });
+    }
 });
 
 // Save address (API)

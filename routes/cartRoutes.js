@@ -3,7 +3,7 @@ const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const { ensureAuth } = require('../middleware/auth');
 
-// View cart page
+// View cart (API)
 router.get('/', ensureAuth, async (req, res) => {
     try {
         let cart = await Cart.findOne({ user: req.user._id })
@@ -11,14 +11,13 @@ router.get('/', ensureAuth, async (req, res) => {
         if (!cart) {
             cart = { items: [], getTotal: () => 0, getItemCount: () => 0 };
         }
-        res.render('pages/cart', {
-            title: 'Shopping Cart',
-            cart,
-            pageScript: 'cart.js'
+        res.json({
+            success: true,
+            data: { cart }
         });
     } catch (err) {
-        console.error('Cart error:', err);
-        res.render('pages/error', { title: 'Error', message: 'Failed to load cart' });
+        console.error('Cart API error:', err);
+        res.status(500).json({ success: false, error: 'Failed to load cart' });
     }
 });
 

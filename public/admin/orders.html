@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Orders | Admin — Pretty Pickles</title>
+    <link rel="stylesheet" href="/css/theme.css">
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="admin-layout">
+        <div id="admin-sidebar-container"></div>
+
+        <div class="admin-content">
+            <div class="admin-page">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <h1>Manage Orders</h1>
+                    <select id="statusFilter" style="padding:8px 16px;border:1px solid var(--border-light);border-radius:4px;">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="paid">Paid (Processing)</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+                
+                <div id="loadingIndicator" style="text-align:center;padding:40px;">
+                    Loading orders...
+                </div>
+
+                <table class="admin-table" id="ordersTableContainer" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Payment</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/admin/components.js"></script>
+    <script src="/js/admin/orders.js"></script>
+</body>
+</html>

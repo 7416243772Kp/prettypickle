@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Order Details | Pretty Pickles">
+    <title>Order Details | Pretty Pickles</title>
+    <link rel="stylesheet" href="/css/theme.css">
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <style>
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .modal-close {
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="header-container"></div>
+
+    <main>
+        <div class="container orders-page" id="orderDetailContainer">
+            <h1 class="page-title">Order Details</h1>
+            <div style="text-align:center; padding: 40px;">
+                <p>Loading details...</p>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <script src="/js/components.js"></script>
+    <script src="/js/order-detail.js"></script>
+</body>
+</html>

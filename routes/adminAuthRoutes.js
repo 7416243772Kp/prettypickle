@@ -7,50 +7,35 @@ const { loginLimiter } = require('../middleware/rateLimiter');
 const { validateAdminLogin } = require('../middleware/validators');
 const { ensureAdmin } = require('../middleware/adminAuth');
 
-// Admin login page
-router.get('/admin-login', (req, res) => {
+// Admin login API
+router.get('/admin-login/status', (req, res) => {
     if (req.session && req.session.adminId && req.session.adminTotpVerified) {
-        return res.redirect('/admin/dashboard');
+        return res.json({ status: 'authenticated' });
     }
-    res.render('admin/login', {
-        layout: false,
-        title: 'Admin Login',
-        error: null,
-        step: 'login' // 'login' or 'totp'
-    });
+    if (req.session && req.session.adminId && !req.session.adminTotpVerified) {
+        return res.json({ status: 'pending_totp' });
+    }
+    res.json({ status: 'unauthenticated' });
 });
 
-// Admin login submit
+// Admin login submit (API)
 router.post('/admin-login', loginLimiter, validateAdminLogin, async (req, res) => {
     try {
         const { email, password } = req.body;
         const admin = await Admin.findOne({ email });
 
         if (!admin || !(await admin.comparePassword(password))) {
-            return res.render('admin/login', {
-                layout: false,
-                title: 'Admin Login',
-                error: 'Invalid email or password',
-                step: 'login'
-            });
+            return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        // Store admin ID in session temporarily
         req.session.adminId = admin._id;
         req.session.adminTotpVerified = false;
         req.session.adminLoginAt = new Date();
 
         if (admin.totpEnabled) {
-            // Redirect to TOTP verification
-            return res.render('admin/login', {
-                layout: false,
-                title: 'TOTP Verification',
-                error: null,
-                step: 'totp'
-            });
+            return res.json({ success: true, step: 'totp' });
         }
 
-        // If TOTP not yet set up, show setup page
         if (!admin.totpSecret) {
             const secret = speakeasy.generateSecret({
                 name: `Pretty Pickles Admin (${admin.email})`,
@@ -61,42 +46,29 @@ router.post('/admin-login', loginLimiter, validateAdminLogin, async (req, res) =
 
             const qrDataUrl = await QRCode.toDataURL(secret.otpauth_url);
 
-            return res.render('admin/login', {
-                layout: false,
-                title: 'Setup TOTP',
-                error: null,
+            return res.json({
+                success: true,
                 step: 'setup-totp',
                 qrCode: qrDataUrl,
                 secret: secret.base32
             });
         }
 
-        // TOTP setup but not enabled — go to verify
-        return res.render('admin/login', {
-            layout: false,
-            title: 'Verify TOTP',
-            error: null,
-            step: 'totp'
-        });
+        return res.json({ success: true, step: 'totp' });
     } catch (err) {
         console.error('Admin login error:', err);
-        res.render('admin/login', {
-            layout: false,
-            title: 'Admin Login',
-            error: 'Something went wrong. Please try again.',
-            step: 'login'
-        });
+        res.status(500).json({ error: 'Something went wrong. Please try again.' });
     }
 });
 
-// Verify TOTP code
+// Verify TOTP code (API)
 router.post('/admin-login/totp', loginLimiter, async (req, res) => {
     try {
         const { totpCode } = req.body;
         const admin = await Admin.findById(req.session.adminId);
 
         if (!admin) {
-            return res.redirect('/admin-login');
+            return res.status(401).json({ error: 'Session expired' });
         }
 
         const verified = speakeasy.totp.verify({
@@ -107,35 +79,26 @@ router.post('/admin-login/totp', loginLimiter, async (req, res) => {
         });
 
         if (!verified) {
-            return res.render('admin/login', {
-                layout: false,
-                title: 'TOTP Verification',
-                error: 'Invalid TOTP code. Please try again.',
-                step: 'totp'
-            });
+            return res.status(400).json({ error: 'Invalid TOTP code' });
         }
 
-        // Enable TOTP if first time
         if (!admin.totpEnabled) {
             admin.totpEnabled = true;
             await admin.save();
         }
 
-        // Generate session token for tracking
         const sessionToken = crypto.randomBytes(32).toString('hex');
         await admin.addSession(sessionToken, req.headers['user-agent']);
 
         req.session.adminTotpVerified = true;
         req.session.adminSessionToken = sessionToken;
         req.session.adminLoginAt = new Date();
-
-        // Set admin session to 24 hours
         req.session.cookie.maxAge = 24 * 60 * 60 * 1000;
 
-        res.redirect('/admin/dashboard');
+        res.json({ success: true, redirect: '/admin/dashboard' });
     } catch (err) {
         console.error('TOTP verification error:', err);
-        res.redirect('/admin-login');
+        res.status(500).json({ error: 'Verification failed' });
     }
 });
 

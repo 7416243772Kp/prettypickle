@@ -11,11 +11,11 @@ const setupSecurity = (app) => {
                 defaultSrc: ["'self'"],
                 scriptSrc: [
                     "'self'",
-                    "'unsafe-inline'",
                     "https://checkout.razorpay.com",
                     "https://accounts.google.com",
                     "https://cdn.jsdelivr.net",
-                    "https://unpkg.com"
+                    "https://unpkg.com",
+                    "https://cdn.jsdelivr.net/npm/chart.js"
                 ],
                 styleSrc: [
                     "'self'",

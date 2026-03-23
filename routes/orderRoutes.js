@@ -9,46 +9,49 @@ const DeliverySetting = require('../models/DeliverySetting');
 const { razorpay } = require('../config/razorpay');
 const crypto = require('crypto');
 
-// Order history page
+// Order history (API)
 router.get('/', ensureAuth, async (req, res) => {
     try {
         const orders = await Order.find({ user: req.user._id })
             .sort({ createdAt: -1 });
-        res.render('pages/orders', { title: 'My Orders', orders, pageScript: 'orders.js' });
+        res.json({ success: true, data: { orders } });
     } catch (err) {
-        res.render('pages/error', { title: 'Error', message: 'Failed to load orders' });
+        res.status(500).json({ success: false, error: 'Failed to load orders' });
     }
 });
 
-// Order detail page
+// Order detail (API)
 router.get('/:orderId', ensureAuth, async (req, res) => {
     try {
         const order = await Order.findOne({ orderId: req.params.orderId, user: req.user._id });
-        if (!order) return res.status(404).render('pages/404', { title: 'Order Not Found' });
-        res.render('pages/order-detail', { title: `Order ${order.orderId}`, order });
+        if (!order) return res.status(404).json({ success: false, error: 'Order not found' });
+        res.json({ success: true, data: { order } });
     } catch (err) {
-        res.render('pages/error', { title: 'Error', message: 'Failed to load order' });
+        res.status(500).json({ success: false, error: 'Failed to load order details' });
     }
 });
 
-// Checkout page
-router.get('/checkout/page', ensureAuth, async (req, res) => {
+// Checkout data (API)
+router.get('/checkout/data', ensureAuth, async (req, res) => {
     try {
         const cart = await Cart.findOne({ user: req.user._id }).populate('items.product');
-        if (!cart || cart.items.length === 0) return res.redirect('/cart');
+        if (!cart || cart.items.length === 0) {
+            return res.status(400).json({ success: false, error: 'Cart is empty' });
+        }
 
         const addresses = await Address.find({ user: req.user._id });
         const deliverySettings = await DeliverySetting.getSettings();
 
-        res.render('pages/checkout', {
-            title: 'Checkout',
-            cart,
-            addresses,
-            deliverySettings,
-            pageScript: 'checkout.js'
+        res.json({
+            success: true,
+            data: {
+                cart,
+                addresses,
+                deliverySettings
+            }
         });
     } catch (err) {
-        res.render('pages/error', { title: 'Error', message: 'Failed to load checkout' });
+        res.status(500).json({ success: false, error: 'Failed to load checkout data' });
     }
 });
 

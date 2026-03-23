@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const expressLayouts = require('express-ejs-layouts');
 const session = require('express-session');
 const MongoStore = require('connect-mongo').default || require('connect-mongo');
 const cookieParser = require('cookie-parser');
@@ -23,14 +22,6 @@ const app = express();
 // Database Connection
 // ============================
 connectDB();
-
-// ============================
-// View Engine (EJS)
-// ============================
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-app.use(expressLayouts);
-app.set('layout', 'layouts/main');
 
 // ============================
 // Body Parsing
@@ -122,56 +113,72 @@ app.use((req, res, next) => {
 // ============================
 // Routes
 // ============================
-app.use('/', require('./routes/pageRoutes'));
-app.use('/auth', require('./routes/authRoutes'));
-app.use('/products', require('./routes/productRoutes'));
-app.use('/cart', require('./routes/cartRoutes'));
-app.use('/orders', require('./routes/orderRoutes'));
-app.use('/reviews', require('./routes/reviewRoutes'));
-app.use('/payment', require('./routes/paymentRoutes'));
-app.use('/addresses', require('./routes/addressRoutes'));
-app.use('/wishlist', require('./routes/wishlistRoutes'));
+app.use('/api', require('./routes/pageRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/products', require('./routes/productRoutes'));
+app.use('/api/cart', require('./routes/cartRoutes'));
+app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/reviews', require('./routes/reviewRoutes'));
+app.use('/api/payment', require('./routes/paymentRoutes'));
+app.use('/api/addresses', require('./routes/addressRoutes'));
+app.use('/api/wishlist', require('./routes/wishlistRoutes'));
 
-// Profile page
-app.get('/profile', require('./middleware/auth').ensureAuth, (req, res) => {
-    res.render('pages/profile', { title: 'My Profile' });
+app.use('/api/adminAuth', require('./routes/adminAuthRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/delivery', require('./routes/deliveryRoutes'));
+
+// ============================
+// Frontend HTML Routing
+// ============================
+// We serve all HTML pages from the 'public' folder. 
+// Fallback for dynamic frontend routes (like /product/slug) to return the base HTML file
+app.get('/product/:slug', (req, res) => res.sendFile(path.join(__dirname, 'public', 'product.html')));
+app.get('/category/:slug', (req, res) => res.sendFile(path.join(__dirname, 'public', 'category.html')));
+app.get('/orders/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'order-detail.html')));
+
+// Catch-all mapping for other valid pages if they don't include .html extension
+app.get('/:page', (req, res, next) => {
+    const pages = ['cart', 'checkout', 'orders', 'profile', 'addresses', 'wishlist', 'search', 'categories', 'about', 'contact', 'terms', 'privacy', 'refund-policy', 'delivery-policy'];
+    if (pages.includes(req.params.page)) {
+        return res.sendFile(path.join(__dirname, 'public', `${req.params.page}.html`));
+    }
+    next();
 });
 
-app.use('/', require('./routes/adminAuthRoutes'));
-app.use('/admin', require('./routes/adminRoutes'));
-app.use('/delivery', require('./routes/deliveryRoutes'));
+// Admin panel dynamic routes
+app.get('/admin/:page', (req, res, next) => {
+    const adminPages = ['dashboard', 'products', 'categories', 'orders', 'coupons', 'promoters', 'bundles', 'banners', 'delivery', 'admins', 'analytics', 'settings'];
+    if (adminPages.includes(req.params.page)) {
+        return res.sendFile(path.join(__dirname, 'public', 'admin', `${req.params.page}.html`));
+    }
+    next();
+});
+
+app.get('/admin-login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html')));
 
 // ============================
 // 404 Handler
 // ============================
 app.use((req, res) => {
-    res.status(404).render('pages/404', {
-        layout: 'layouts/main',
-        title: 'Page Not Found'
-    });
+    if (req.accepts('html')) {
+        res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+    } else {
+        res.status(404).json({ error: 'Not found' });
+    }
 });
 
 // ============================
-// Error Handler
+// API Error Handler
 // ============================
 app.use((err, req, res, next) => {
     console.error('Server Error:', err);
 
-    // CSRF token error
     if (err.code === 'EBADCSRFTOKEN') {
-        return res.status(403).render('pages/error', {
-            layout: 'layouts/main',
-            title: 'Session Expired',
-            message: 'Your session has expired. Please refresh and try again.'
-        });
+        return res.status(403).json({ error: 'Session expired. Please refresh the page.' });
     }
 
-    res.status(err.status || 500).render('pages/error', {
-        layout: 'layouts/main',
-        title: 'Error',
-        message: process.env.NODE_ENV === 'production'
-            ? 'Something went wrong. Please try again.'
-            : err.message
+    res.status(err.status || 500).json({ 
+        error: process.env.NODE_ENV === 'production' ? 'Something went wrong.' : err.message 
     });
 });
 

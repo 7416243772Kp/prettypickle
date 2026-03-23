@@ -38,45 +38,56 @@ router.get('/dashboard', async (req, res) => {
             Order.find().sort({ createdAt: -1 }).limit(10)
         ]);
 
-        res.render('admin/dashboard', {
-            layout: 'layouts/admin',
-            title: 'Dashboard',
-            chartjs: true,
-            stats: {
-                todaySales: todaySales[0]?.total || 0,
-                yesterdaySales: yesterdaySales[0]?.total || 0,
-                weekSales: weekSales[0]?.total || 0,
-                monthSales: monthSales[0]?.total || 0,
-                lastMonthSales: lastMonthSales[0]?.total || 0,
-                totalSales: totalSales[0]?.total || 0,
-                totalOrders
-            },
-            recentOrders,
-            pageScript: 'dashboard.js'
+        res.json({
+            success: true,
+            data: {
+                stats: {
+                    todaySales: todaySales[0]?.total || 0,
+                    yesterdaySales: yesterdaySales[0]?.total || 0,
+                    weekSales: weekSales[0]?.total || 0,
+                    monthSales: monthSales[0]?.total || 0,
+                    lastMonthSales: lastMonthSales[0]?.total || 0,
+                    totalSales: totalSales[0]?.total || 0,
+                    totalOrders
+                },
+                recentOrders
+            }
         });
     } catch (err) {
         console.error('Dashboard error:', err);
-        res.render('admin/dashboard', { layout: 'layouts/admin', title: 'Dashboard', stats: {}, recentOrders: [], chartjs: true, pageScript: 'dashboard.js' });
+        res.status(500).json({ error: 'Failed to fetch dashboard data' });
     }
 });
 
 // ==================== PRODUCTS ====================
 router.get('/products', async (req, res) => {
-    const products = await Product.find().populate('category').sort({ createdAt: -1 });
-    const categories = await Category.find({ isActive: true });
-    res.render('admin/products', { layout: 'layouts/admin', title: 'Products', products, categories, pageScript: 'products.js' });
+    try {
+        const products = await Product.find().populate('category').sort({ createdAt: -1 });
+        const categories = await Category.find({ isActive: true });
+        res.json({ success: true, data: { products, categories } });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch products' });
+    }
 });
 
 router.get('/products/new', async (req, res) => {
-    const categories = await Category.find({ isActive: true });
-    res.render('admin/product-form', { layout: 'layouts/admin', title: 'Add Product', product: null, categories, pageScript: 'product-form.js' });
+    try {
+        const categories = await Category.find({ isActive: true });
+        res.json({ success: true, data: { product: null, categories } });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch form data' });
+    }
 });
 
 router.get('/products/edit/:id', async (req, res) => {
-    const product = await Product.findById(req.params.id);
-    const categories = await Category.find({ isActive: true });
-    if (!product) return res.redirect('/admin/products');
-    res.render('admin/product-form', { layout: 'layouts/admin', title: 'Edit Product', product, categories, pageScript: 'product-form.js' });
+    try {
+        const product = await Product.findById(req.params.id);
+        const categories = await Category.find({ isActive: true });
+        if (!product) return res.status(404).json({ error: 'Product not found' });
+        res.json({ success: true, data: { product, categories } });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch product' });
+    }
 });
 
 router.post('/products/save', uploadProductImage, async (req, res) => {
@@ -102,10 +113,10 @@ router.post('/products/save', uploadProductImage, async (req, res) => {
         } else {
             await Product.create(productData);
         }
-        res.redirect('/admin/products');
+        res.json({ success: true, redirect: '/admin/products' });
     } catch (err) {
         console.error('Save product error:', err);
-        res.redirect('/admin/products');
+        res.status(500).json({ error: 'Failed to save product' });
     }
 });
 
@@ -126,8 +137,12 @@ router.delete('/products/:id', async (req, res) => {
 
 // ==================== CATEGORIES ====================
 router.get('/categories', async (req, res) => {
-    const categories = await Category.find().sort({ displayOrder: 1 });
-    res.render('admin/categories', { layout: 'layouts/admin', title: 'Categories', categories, pageScript: 'categories.js' });
+    try {
+        const categories = await Category.find().sort({ displayOrder: 1 });
+        res.json({ success: true, data: { categories } });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch categories' });
+    }
 });
 
 router.post('/categories/save', async (req, res) => {
@@ -157,16 +172,24 @@ router.delete('/categories/:id', async (req, res) => {
 
 // ==================== ORDERS ====================
 router.get('/orders', async (req, res) => {
-    const status = req.query.status || '';
-    const query = status ? { status } : {};
-    const orders = await Order.find(query).populate('user', 'name email').sort({ createdAt: -1 });
-    res.render('admin/orders', { layout: 'layouts/admin', title: 'Orders', orders, currentStatus: status, pageScript: 'orders.js' });
+    try {
+        const status = req.query.status || '';
+        const query = status ? { status } : {};
+        const orders = await Order.find(query).populate('user', 'name email').sort({ createdAt: -1 });
+        res.json({ success: true, data: { orders, currentStatus: status } });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch orders' });
+    }
 });
 
 router.get('/orders/:id', async (req, res) => {
-    const order = await Order.findById(req.params.id).populate('user', 'name email avatar');
-    if (!order) return res.redirect('/admin/orders');
-    res.render('admin/order-detail', { layout: 'layouts/admin', title: `Order ${order.orderId}`, order });
+    try {
+        const order = await Order.findById(req.params.id).populate('user', 'name email avatar');
+        if (!order) return res.status(404).json({ error: 'Order not found' });
+        res.json({ success: true, data: { order } });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch order details' });
+    }
 });
 
 router.put('/orders/:id/status', async (req, res) => {
@@ -186,22 +209,34 @@ router.put('/orders/:id/status', async (req, res) => {
 
 // ==================== COUPONS ====================
 router.get('/coupons', async (req, res) => {
-    const coupons = await Coupon.find().sort({ createdAt: -1 });
-    res.render('admin/coupons', { layout: 'layouts/admin', title: 'Coupons', coupons, pageScript: 'coupons.js' });
+    try {
+        const coupons = await Coupon.find().sort({ createdAt: -1 });
+        res.json({ success: true, data: { coupons } });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch coupons' });
+    }
 });
 
 router.get('/coupons/new', async (req, res) => {
-    const products = await Product.find({ isActive: true });
-    const categories = await Category.find({ isActive: true });
-    res.render('admin/coupon-form', { layout: 'layouts/admin', title: 'Create Coupon', coupon: null, products, categories, pageScript: 'coupon-form.js' });
+    try {
+        const products = await Product.find({ isActive: true });
+        const categories = await Category.find({ isActive: true });
+        res.json({ success: true, data: { products, categories, coupon: null } });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch coupon configs' });
+    }
 });
 
 router.get('/coupons/edit/:id', async (req, res) => {
-    const coupon = await Coupon.findById(req.params.id);
-    const products = await Product.find({ isActive: true });
-    const categories = await Category.find({ isActive: true });
-    if (!coupon) return res.redirect('/admin/coupons');
-    res.render('admin/coupon-form', { layout: 'layouts/admin', title: 'Edit Coupon', coupon, products, categories, pageScript: 'coupon-form.js' });
+    try {
+        const coupon = await Coupon.findById(req.params.id);
+        const products = await Product.find({ isActive: true });
+        const categories = await Category.find({ isActive: true });
+        if (!coupon) return res.status(404).json({ error: 'Coupon not found' });
+        res.json({ success: true, data: { coupon, products, categories } });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch coupon' });
+    }
 });
 
 router.post('/coupons/save', async (req, res) => {
@@ -213,8 +248,8 @@ router.post('/coupons/save', async (req, res) => {
             discountType, discountValue: parseFloat(discountValue),
             maxDiscountAmount: parseFloat(maxDiscountAmount) || 0,
             scope,
-            applicableProducts: applicableProducts ? JSON.parse(applicableProducts) : [],
-            applicableCategories: applicableCategories ? JSON.parse(applicableCategories) : [],
+            applicableProducts: applicableProducts ? typeof applicableProducts === 'string' ? JSON.parse(applicableProducts) : applicableProducts : [],
+            applicableCategories: applicableCategories ? typeof applicableCategories === 'string' ? JSON.parse(applicableCategories) : applicableCategories : [],
             usageType, maxUsesPerUser: parseInt(maxUsesPerUser) || 1,
             promoterUPI, promoterCommission: parseFloat(promoterCommission) || 0,
             makerUPI, makerCommission: parseFloat(makerCommission) || 0,
@@ -225,10 +260,10 @@ router.post('/coupons/save', async (req, res) => {
         } else {
             await Coupon.create(data);
         }
-        res.redirect('/admin/coupons');
+        res.json({ success: true, redirect: '/admin/coupons' });
     } catch (err) {
         console.error('Save coupon error:', err);
-        res.redirect('/admin/coupons');
+        res.status(500).json({ error: 'Failed to save coupon' });
     }
 });
 
@@ -266,15 +301,16 @@ router.get('/promoters', async (req, res) => {
                 makerMap[c.makerUPI].orders.push(order.orderId);
             }
         }
-        res.render('admin/promoters', {
-            layout: 'layouts/admin', title: 'Promoters & Payouts',
-            promoters: Object.values(promoterMap),
-            makers: Object.values(makerMap),
-            pageScript: 'promoters.js'
+        res.json({ 
+            success: true, 
+            data: { 
+                promoters: Object.values(promoterMap), 
+                makers: Object.values(makerMap) 
+            }
         });
     } catch (err) {
         console.error('Promoters error:', err);
-        res.render('admin/promoters', { layout: 'layouts/admin', title: 'Promoters', promoters: [], makers: [], pageScript: 'promoters.js' });
+        res.status(500).json({ error: 'Failed to fetch promoters' });
     }
 });
 
@@ -310,9 +346,13 @@ router.post('/promoters/pay', async (req, res) => {
 
 // ==================== BUNDLES ====================
 router.get('/bundles', async (req, res) => {
-    const bundles = await Bundle.find().populate('products.product').sort({ createdAt: -1 });
-    const products = await Product.find({ isActive: true });
-    res.render('admin/bundles', { layout: 'layouts/admin', title: 'Bundles', bundles, products, pageScript: 'bundles.js' });
+    try {
+        const bundles = await Bundle.find().populate('products.product').sort({ createdAt: -1 });
+        const products = await Product.find({ isActive: true });
+        res.json({ success: true, data: { bundles, products } });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch bundles' });
+    }
 });
 
 router.post('/bundles/save', async (req, res) => {
@@ -320,7 +360,7 @@ router.post('/bundles/save', async (req, res) => {
         const { id, name, description, products, bundlePrice, originalPrice } = req.body;
         const data = { name, description, products: JSON.parse(products), bundlePrice: parseFloat(bundlePrice), originalPrice: parseFloat(originalPrice) || 0 };
         if (id) { await Bundle.findByIdAndUpdate(id, data); } else { await Bundle.create(data); }
-        res.json({ success: true });
+        res.json({ success: true, redirect: '/admin/bundles' });
     } catch (err) { res.status(500).json({ error: 'Failed to save bundle' }); }
 });
 
@@ -331,8 +371,12 @@ router.delete('/bundles/:id', async (req, res) => {
 
 // ==================== BANNERS ====================
 router.get('/banners', async (req, res) => {
-    const banners = await Banner.find().sort({ displayOrder: 1 });
-    res.render('admin/banners', { layout: 'layouts/admin', title: 'Banners', banners, pageScript: 'banners.js' });
+    try {
+        const banners = await Banner.find().sort({ displayOrder: 1 });
+        res.json({ success: true, data: { banners } });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch banners' });
+    }
 });
 
 router.post('/banners/save', uploadBannerImage, async (req, res) => {
@@ -347,8 +391,8 @@ router.post('/banners/save', uploadBannerImage, async (req, res) => {
             if (!data.image) return res.status(400).json({ error: 'Image required' });
             await Banner.create(data);
         }
-        res.redirect('/admin/banners');
-    } catch (err) { res.redirect('/admin/banners'); }
+        res.json({ success: true, redirect: '/admin/banners' });
+    } catch (err) { res.status(500).json({ error: 'Failed to save banner' }); }
 });
 
 router.delete('/banners/:id', async (req, res) => {
@@ -360,9 +404,13 @@ router.delete('/banners/:id', async (req, res) => {
 
 // ==================== DELIVERY SETTINGS ====================
 router.get('/delivery', async (req, res) => {
-    const settings = await DeliverySetting.getSettings();
-    const deliveryPersons = await DeliveryPerson.find();
-    res.render('admin/delivery', { layout: 'layouts/admin', title: 'Delivery', settings, deliveryPersons, pageScript: 'delivery.js' });
+    try {
+        const settings = await DeliverySetting.getSettings();
+        const deliveryPersons = await DeliveryPerson.find();
+        res.json({ success: true, data: { settings, deliveryPersons } });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch delivery configs' });
+    }
 });
 
 router.post('/delivery/settings', async (req, res) => {
@@ -374,7 +422,7 @@ router.post('/delivery/settings', async (req, res) => {
         settings.expectedDeliveryText = expectedDeliveryText || '1-2 weeks';
         await settings.save();
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: 'Failed to update' }); }
+    } catch (err) { res.status(500).json({ error: 'Failed to update settings' }); }
 });
 
 router.post('/delivery/person', async (req, res) => {
@@ -407,10 +455,20 @@ router.get('/analytics', async (req, res) => {
 
         const neverBought = await Product.find({ totalSold: 0, isActive: true }).populate('category');
 
-        res.render('admin/analytics', {
-            layout: 'layouts/admin', title: 'Analytics',
-            topCustomers, topProducts, categoryStats, neverBought,
-            pageScript: 'analytics.js'
+        res.json({
+            success: true,
+            data: {
+                topCustomers: topCustomers.map(c => ({
+                    userId: c._id,
+                    name: c.user?.name || 'Unknown',
+                    email: c.user?.email || '',
+                    totalSpent: c.totalSpent,
+                    orderCount: c.orderCount
+                })),
+                topProducts,
+                categoryStats,
+                neverBought
+            }
         });
     } catch (err) {
         console.error('Analytics error:', err);

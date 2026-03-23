@@ -3,11 +3,15 @@ const { ensureAuth } = require('../middleware/auth');
 const User = require('../models/User');
 const Product = require('../models/Product');
 
-// Wishlist page
+// Wishlist API
 router.get('/', ensureAuth, async (req, res) => {
-    const user = await User.findById(req.user._id).populate('wishlist');
-    const products = user.wishlist.filter(p => p.isActive);
-    res.render('pages/wishlist', { title: 'Wishlist', products });
+    try {
+        const user = await User.findById(req.user._id).populate('wishlist');
+        const products = user.wishlist.filter(p => p.isActive);
+        res.json({ success: true, data: { products } });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch wishlist' });
+    }
 });
 
 // Toggle wishlist (API)

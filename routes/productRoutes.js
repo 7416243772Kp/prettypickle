@@ -9,7 +9,7 @@ router.get('/:slug', async (req, res) => {
         const product = await Product.findOne({ slug: req.params.slug, isActive: true })
             .populate('category');
         if (!product) {
-            return res.status(404).render('pages/404', { title: 'Product Not Found' });
+            return res.status(404).json({ success: false, error: 'Product not found' });
         }
 
         // Track recently viewed
@@ -50,22 +50,25 @@ router.get('/:slug', async (req, res) => {
             userReview = await Review.findOne({ user: req.user._id, product: product._id });
         }
 
-        res.render('pages/product', {
-            title: product.title,
-            product,
-            reviews,
-            ratingDistribution,
-            frequentlyBought,
-            userReview,
-            currentPage: page,
-            totalPages: Math.ceil(totalReviews / limit),
-            totalReviews,
-            filterRating,
-            pageScript: 'product.js'
+        res.json({
+            success: true,
+            data: {
+                product,
+                reviews,
+                ratingDistribution,
+                frequentlyBought,
+                userReview,
+                pagination: {
+                    currentPage: page,
+                    totalPages: Math.ceil(totalReviews / limit),
+                    totalReviews,
+                    filterRating
+                }
+            }
         });
     } catch (err) {
-        console.error('Product detail error:', err);
-        res.render('pages/error', { title: 'Error', message: 'Failed to load product' });
+        console.error('Product detail API error:', err);
+        res.status(500).json({ success: false, error: 'Failed to load product details' });
     }
 });
 

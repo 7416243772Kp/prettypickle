@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Promoters & Payouts | Admin — Pretty Pickles</title>
+    <link rel="stylesheet" href="/css/theme.css">
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="admin-layout">
+        <div id="admin-sidebar-container"></div>
+
+        <div class="admin-content">
+            <div class="admin-page">
+                <div style="margin-bottom:20px;">
+                    <h1>Promoters & Pickle Makers Commission Payouts</h1>
+                    <p style="color:var(--gray-mid);">Pay accumulated pending commissions directly to their UPI IDs via RazorpayX.</p>
+                </div>
+                
+                <div id="loadingIndicator" style="text-align:center;padding:40px;">
+                    Loading pending payouts...
+                </div>
+
+                <div id="payoutsContainer" style="display:none;">
+                    <h3 style="margin:24px 0 12px;border-bottom:1px solid #eee;padding-bottom:8px;">Promoters (Pending)</h3>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>UPI ID</th>
+                                <th>Pending Amount</th>
+                                <th>Order IDs</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="promotersTableBody">
+                        </tbody>
+                    </table>
+
+                    <h3 style="margin:36px 0 12px;border-bottom:1px solid #eee;padding-bottom:8px;">Pickle Makers (Pending)</h3>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>UPI ID</th>
+                                <th>Pending Amount</th>
+                                <th>Order IDs</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="makersTableBody">
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/admin/components.js"></script>
+    <script src="/js/admin/promoters.js"></script>
+</body>
+</html>

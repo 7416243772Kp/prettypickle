@@ -3,9 +3,12 @@ const ensureAuth = (req, res, next) => {
     if (req.isAuthenticated()) {
         return next();
     }
+    if (req.originalUrl.startsWith('/api/')) {
+        return res.status(401).json({ error: 'Unauthorized. Please log in.' });
+    }
     // Store the original URL to redirect back after login
     req.session.returnTo = req.originalUrl;
-    res.redirect('/auth/google');
+    res.redirect('/api/auth/google');
 };
 
 // Check if user is authenticated (non-blocking)

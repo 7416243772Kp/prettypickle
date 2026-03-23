@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Product Form | Admin — Pretty Pickles</title>
+    <link rel="stylesheet" href="/css/theme.css">
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="admin-layout">
+        <div id="admin-sidebar-container"></div>
+
+        <div class="admin-content">
+            <div class="admin-page">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <h1 id="pageTitle">Add Product</h1>
+                    <a href="/admin/products" class="btn btn-small" style="background:#f5f5f5;color:#000;">← Back</a>
+                </div>
+
+                <div id="loadingIndicator" style="text-align:center;padding:40px;">
+                    Loading product data...
+                </div>
+
+                <form id="productForm" style="display:none;background:#fff;padding:24px;border-radius:8px;border:1px solid var(--border-light);">
+                    <input type="hidden" id="productId" name="id">
+                    
+                    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;">
+                        <!-- Left Column: Main Info -->
+                        <div>
+                            <div class="form-group">
+                                <label>Product Title *</label>
+                                <input type="text" name="title" id="title" required style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:4px;">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Description *</label>
+                                <textarea name="description" id="description" rows="5" required style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:4px;resize:vertical;"></textarea>
+                            </div>
+
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                                <div class="form-group">
+                                    <label>Category *</label>
+                                    <select name="category" id="category" required style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:4px;">
+                                        <!-- Populated via JS -->
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Target Audience (Type) *</label>
+                                    <select name="type" id="type" required style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:4px;">
+                                        <option value="b2c">B2C (Retail)</option>
+                                        <option value="b2b">B2B (Wholesale)</option>
+                                        <option value="both">Both</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <h3 style="margin:24px 0 16px;border-bottom:1px solid #eee;padding-bottom:8px;">Pricing & Variants</h3>
+                            
+                            <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+                                <input type="checkbox" name="hasVariants" id="hasVariants" value="true">
+                                <label for="hasVariants" style="margin:0;font-weight:600;cursor:pointer;">Product has multiple weights/variants</label>
+                            </div>
+
+                            <!-- Single Price Mode -->
+                            <div id="singlePriceConfig" style="background:#f9f9f9;padding:16px;border-radius:4px;margin-bottom:20px;">
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                                    <div class="form-group" style="margin:0;">
+                                        <label>B2C Base Price (₹)</label>
+                                        <input type="number" id="basePriceB2C" value="0" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;">
+                                    </div>
+                                    <div class="form-group" style="margin:0;">
+                                        <label>B2B Base Price (₹)</label>
+                                        <input type="number" id="basePriceB2B" value="0" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Multi Variant Mode -->
+                            <div id="variantsConfig" style="display:none;background:#f9f9f9;padding:16px;border-radius:4px;margin-bottom:20px;">
+                                <div id="variantsList"></div>
+                                <button type="button" class="btn btn-small" id="addVariantBtn" style="background:#333;color:#fff;margin-top:12px;">+ Add Variant</button>
+                                <input type="hidden" name="variants" id="variantsJson">
+                                <input type="hidden" name="basePrices" id="basePricesJson">
+                            </div>
+
+                            <h3 style="margin:24px 0 16px;border-bottom:1px solid #eee;padding-bottom:8px;">Images</h3>
+                            <div class="form-group">
+                                <label>Upload New Images (Will replace existing)</label>
+                                <input type="file" name="images" multiple accept="image/*" style="width:100%;padding:10px;border:1px dashed var(--border-light);border-radius:4px;background:#f9f9f9;">
+                            </div>
+                            <div id="currentImages" style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;"></div>
+                            
+                            <hr style="margin:24px 0;border-top:1px solid var(--border-light);">
+                            
+                            <button type="submit" class="btn btn-primary btn-full" id="submitBtn">Save Product</button>
+                        </div>
+                        
+                        <!-- Right Column: Meta Info -->
+                        <div>
+                            <div style="background:#f9f9f9;padding:16px;border-radius:8px;border:1px solid #eee;">
+                                <h3 style="margin-bottom:16px;font-size:1.1rem;">Inventory</h3>
+                                <div class="form-group">
+                                    <label>Current Stock Count</label>
+                                    <input type="number" name="stock" id="stock" value="0" style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:4px;">
+                                    <small style="color:var(--gray-mid);display:block;margin-top:4px;">Ignored if variants have their own stock</small>
+                                </div>
+                            </div>
+
+                            <div style="background:#f9f9f9;padding:16px;border-radius:8px;border:1px solid #eee;margin-top:20px;">
+                                <h3 style="margin-bottom:16px;font-size:1.1rem;">SEO Details</h3>
+                                <div class="form-group">
+                                    <label>Meta Title</label>
+                                    <input type="text" name="metaTitle" id="metaTitle" style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:4px;">
+                                </div>
+                                <div class="form-group">
+                                    <label>Meta Description</label>
+                                    <textarea name="metaDescription" id="metaDescription" rows="3" style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:4px;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Admin JS -->
+    <script src="/js/admin/components.js"></script>
+    <script src="/js/admin/product-form.js"></script>
+</body>
+</html>
