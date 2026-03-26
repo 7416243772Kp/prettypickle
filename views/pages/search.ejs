@@ -1,4 +1,0 @@
-<div class="container" style="padding:30px 20px;"><h1 class="page-title">Search: "<%= query %>"</h1>
-<% if (products.length > 0) { %><p style="color:var(--gray-mid);margin-bottom:20px;"><%= products.length %> results found</p>
-<div class="products-grid"><% products.forEach(product => { %><%- include('../partials/product-card', { product }) %><% }) %></div>
-<% } else { %><div class="error-page" style="min-height:30vh;"><p>No products found for "<%= query %>"</p><a href="/" class="btn btn-primary mt-20">Back to Home</a></div><% } %></div>
